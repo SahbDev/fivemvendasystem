@@ -1588,6 +1588,13 @@
       <input type="password" id="senha" placeholder="Digite a senha de acesso" />
     </div>
     
+    <!-- Novo checkbox para "Lembrar-me" -->
+    <div class="checkbox-container" style="margin-top: 10px; margin-bottom: 20px;" onclick="document.getElementById('lembrar-me').checked = !document.getElementById('lembrar-me').checked;">
+      <input type="checkbox" id="lembrar-me">
+      <div class="checkbox-custom"></div>
+      <span>Lembrar-me neste dispositivo</span>
+    </div>
+
     <button class="btn" id="btn-login">
       <i class="fas fa-sign-in-alt"></i> Acessar Sistema
     </button>
@@ -2278,15 +2285,38 @@
 
 
     // ================= TELA DE LOGIN =================
-    async function handleLogin() {
-      const senha = document.getElementById("senha").value;
+    // Chave para armazenar a senha no localStorage
+    const LOCAL_STORAGE_KEY = "fivem_system_password";
+
+    // Função para carregar a senha salva ao iniciar
+    async function loadSavedPassword() {
+      const savedPassword = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (savedPassword) {
+        document.getElementById("senha").value = savedPassword;
+        document.getElementById("lembrar-me").checked = true;
+        // Opcional: Tenta fazer login automaticamente se houver senha salva
+        // handleLogin(true); // Passa 'true' para indicar login automático
+      }
+    }
+
+    async function handleLogin(isAutoLogin = false) {
+      const senhaInput = document.getElementById("senha");
+      const senha = senhaInput.value;
       const loginContainer = document.querySelector('.login-container');
       const loginMessage = document.getElementById('login-message');
+      const lembrarMeCheckbox = document.getElementById("lembrar-me");
       
       if (senha === "adm00") { /* SENHA ALTERADA AQUI */
         loginMessage.textContent = "";
         loginMessage.style.color = "var(--accent)";
         
+        // Salva a senha se "Lembrar-me" estiver marcado
+        if (lembrarMeCheckbox.checked) {
+          localStorage.setItem(LOCAL_STORAGE_KEY, senha);
+        } else {
+          localStorage.removeItem(LOCAL_STORAGE_KEY); // Remove se desmarcado
+        }
+
         loginContainer.style.opacity = "0";
         loginContainer.style.transform = "translate(-50%, -50%) scale(0.9)";
         
@@ -2307,6 +2337,9 @@
       } else {
         loginMessage.textContent = "Senha incorreta! Tente novamente.";
         loginMessage.style.color = "var(--danger)";
+        senhaInput.value = ""; // Limpa o campo da senha
+        localStorage.removeItem(LOCAL_STORAGE_KEY); // Remove a senha salva se a tentativa for incorreta
+        lembrarMeCheckbox.checked = false; // Desmarca "Lembrar-me"
         
         loginContainer.classList.remove('error-shake');
         void loginContainer.offsetWidth;
@@ -2316,6 +2349,11 @@
 
     async function handleLoginSemSenha() {
       const loginContainer = document.querySelector('.login-container');
+      const lembrarMeCheckbox = document.getElementById("lembrar-me");
+
+      // Se o usuário optar por entrar sem senha, remove qualquer senha salva
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      lembrarMeCheckbox.checked = false;
       
       loginContainer.style.opacity = "0";
       loginContainer.style.transform = "translate(-50%, -50%) scale(0.9)";
@@ -2336,7 +2374,7 @@
       await carregarResumoGlobal();
     }
 
-    document.getElementById("btn-login").addEventListener("click", handleLogin);
+    document.getElementById("btn-login").addEventListener("click", () => handleLogin());
     document.getElementById("btn-login-sem-senha").addEventListener("click", handleLoginSemSenha);
 
     document.getElementById("senha").addEventListener("keydown", function(e) {
@@ -2434,6 +2472,9 @@
 
     // ================= SISTEMA PRINCIPAL =================
     document.addEventListener('DOMContentLoaded', async () => {
+      // Carrega a senha salva ao iniciar
+      loadSavedPassword();
+
       document.querySelectorAll('.nav-tab').forEach(tab => {
         tab.addEventListener('click', () => {
           document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -3254,3 +3295,4 @@
   </script>
 </body>
 </html>
+
