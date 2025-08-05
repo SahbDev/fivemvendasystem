@@ -2294,8 +2294,12 @@
       if (savedPassword) {
         document.getElementById("senha").value = savedPassword;
         document.getElementById("lembrar-me").checked = true;
-        // Opcional: Tenta fazer login automaticamente se houver senha salva
-        // handleLogin(true); // Passa 'true' para indicar login automático
+        
+        // Tenta fazer login automaticamente se houver senha salva
+        // Adicione um pequeno atraso para permitir que o DOM seja renderizado
+        setTimeout(() => {
+          handleLogin(true); // Passa 'true' para indicar login automático
+        }, 100); // Atraso de 100ms
       }
     }
 
@@ -2317,17 +2321,23 @@
           localStorage.removeItem(LOCAL_STORAGE_KEY); // Remove se desmarcado
         }
 
-        loginContainer.style.opacity = "0";
-        loginContainer.style.transform = "translate(-50%, -50%) scale(0.9)";
-        
-        createFireworks();
+        // Se for login automático, não mostre a animação de shake
+        if (!isAutoLogin) {
+          loginContainer.style.opacity = "0";
+          loginContainer.style.transform = "translate(-50%, -50%) scale(0.9)";
+          createFireworks();
+        } else {
+          // Para login automático, apenas esconde o container rapidamente
+          loginContainer.style.transition = "opacity 0.3s ease-out";
+          loginContainer.style.opacity = "0";
+        }
         
         setTimeout(() => { // Adiciona um pequeno delay para a animação de fade out
             loginContainer.style.display = "none";
             document.querySelector('.footer-note').style.display = "none";
             document.getElementById('particles-js').style.display = "none";
             document.getElementById('main-content').style.display = "block";
-        }, 700); // Tempo do delay deve ser menor que a duração da animação de loginEntrance
+        }, isAutoLogin ? 300 : 700); // Tempo do delay menor para login automático
 
         // Carregar TODOS os dados administrativos da bin única
         await carregarDadosAdmin();
@@ -2335,6 +2345,17 @@
         
         await carregarResumoGlobal();
       } else {
+        // Se a senha salva for inválida (por exemplo, alterada), limpa o localStorage
+        if (isAutoLogin) {
+          console.warn("Senha salva inválida. Limpando localStorage.");
+          localStorage.removeItem(LOCAL_STORAGE_KEY);
+          lembrarMeCheckbox.checked = false;
+          // Se for login automático e falhar, exibe a tela de login novamente
+          loginContainer.style.opacity = "1";
+          loginContainer.style.transform = "translate(-50%, -50%)";
+          loginContainer.style.display = "block";
+        }
+
         loginMessage.textContent = "Senha incorreta! Tente novamente.";
         loginMessage.style.color = "var(--danger)";
         senhaInput.value = ""; // Limpa o campo da senha
@@ -3295,4 +3316,3 @@
   </script>
 </body>
 </html>
-
